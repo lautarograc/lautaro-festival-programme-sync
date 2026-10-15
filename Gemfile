@@ -19,6 +19,8 @@ gem "tailwindcss-rails"
 
 # Background jobs [https://github.com/sidekiq/sidekiq]
 gem "sidekiq"
+# Scheduler for Sidekiq
+gem "sidekiq-scheduler"
 # Redis client, used by Sidekiqgem "redis", ">= 4.0.1"
 # HTTP client used by the programme sync to talk to the (mock) external API
 gem "faraday"
@@ -39,8 +41,6 @@ group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
-  # Test framework [https://github.com/rspec/rspec-rails]
-  gem "rspec-rails"
   # Test data factories [https://github.com/thoughtbot/factory_bot_rails]
   gem "factory_bot_rails"
 

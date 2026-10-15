@@ -25,9 +25,9 @@ console:
 sh:
 	docker compose exec web bash
 
-# Run the RSpec suite against a freshly prepared test database.
+# Run the Minitest suite against a freshly prepared test database.
 test:
-	docker compose run --rm -e RAILS_ENV=test web sh -c "bin/rails db:prepare && bundle exec rspec"
+	docker compose run --rm -e RAILS_ENV=test web sh -c "bin/rails db:prepare && bin/rails test"
 
 # Follow the web + sidekiq logs.
 logs:
