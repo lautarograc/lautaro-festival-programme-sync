@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_212453) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_015925) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -45,7 +45,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_212453) do
     t.datetime "finished_at"
     t.integer "generation"
     t.integer "pages_fetched", default: 0, null: false
+    t.integer "records_created", default: 0, null: false
     t.integer "records_removed", default: 0, null: false
+    t.integer "records_skipped", default: 0, null: false
+    t.integer "records_updated", default: 0, null: false
     t.integer "records_upserted", default: 0, null: false
     t.datetime "started_at", null: false
     t.string "status", default: "running", null: false

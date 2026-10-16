@@ -22,6 +22,10 @@ module ProgrammeSync
       run_2 = Runner.new(generation: 2, client: MockApiStub.client).call
 
       assert_predicate run_2, :succeeded?
+      assert_equal 2, run_2.records_created
+      assert_equal 7, run_2.records_updated
+      assert_equal 52, run_2.records_skipped
+      assert_equal 9, run_2.records_upserted
 
       assert_equal 61, Screening.count
 
@@ -76,6 +80,9 @@ module ProgrammeSync
       assert_equal 3, run.pages_fetched # 60 records / 25 per page, rounded up
       assert_equal 3, run.total_pages
       assert_equal 60, run.records_upserted
+      assert_equal 60, run.records_created
+      assert_equal 0, run.records_updated
+      assert_equal 0, run.records_skipped
       assert run.finished_at.present?
     end
 

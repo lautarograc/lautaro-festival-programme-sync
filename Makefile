@@ -27,7 +27,7 @@ sh:
 
 # Run the Minitest suite against a freshly prepared test database.
 test:
-	docker compose run --rm -e RAILS_ENV=test web sh -c "bin/rails db:prepare && bin/rails test"
+	docker compose run --rm -e RAILS_ENV=test web sh -c "bin/rails db:test:prepare && bin/rails test"
 
 # Follow the web + sidekiq logs.
 logs:

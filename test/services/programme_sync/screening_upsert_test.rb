@@ -67,5 +67,34 @@ module ProgrammeSync
 
       assert_predicate Screening.find_by(external_id: "SCR-0001"), :cancelled?
     end
+
+    test "classifies a new screening as created, not skipped" do
+      result = ScreeningUpsert.new([ screening_payload ]).call
+
+      assert_equal [ "SCR-0001" ], result.external_ids
+      assert_equal 1, result.created
+      assert_equal 0, result.updated
+      assert_equal 0, result.skipped
+    end
+
+    test "classifies an unchanged screening as skipped, not upserted, on a repeat run" do
+      ScreeningUpsert.new([ screening_payload ]).call
+
+      result = ScreeningUpsert.new([ screening_payload ]).call
+
+      assert_equal 0, result.created
+      assert_equal 0, result.updated
+      assert_equal 1, result.skipped
+    end
+
+    test "classifies a changed screening as updated, not created" do
+      ScreeningUpsert.new([ screening_payload(status: "scheduled") ]).call
+
+      result = ScreeningUpsert.new([ screening_payload(status: "cancelled") ]).call
+
+      assert_equal 0, result.created
+      assert_equal 1, result.updated
+      assert_equal 0, result.skipped
+    end
   end
 end

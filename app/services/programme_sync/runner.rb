@@ -10,11 +10,26 @@ module ProgrammeSync
     def call
       sync_run = SyncRun.create!(status: :running, generation: @generation, started_at: Time.current)
       seen_external_ids = []
+      created = 0
+      updated = 0
+      skipped = 0
 
       begin
         @client.each_page(generation: @generation, fail_after: @fail_after, slow: @slow) do |screenings, page:, total_pages:|
-          seen_external_ids.concat(ScreeningUpsert.new(screenings).call)
-          sync_run.update!(pages_fetched: page, total_pages: total_pages, records_upserted: seen_external_ids.size)
+          result = ScreeningUpsert.new(screenings).call
+          seen_external_ids.concat(result.external_ids)
+          created += result.created
+          updated += result.updated
+          skipped += result.skipped
+
+          sync_run.update!(
+            pages_fetched: page,
+            total_pages: total_pages,
+            records_upserted: created + updated,
+            records_created: created,
+            records_updated: updated,
+            records_skipped: skipped
+          )
         end
 
         removed = reconcile_removed_screenings(seen_external_ids)
