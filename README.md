@@ -1,3 +1,17 @@
+# Solution:
+
+The solution involves creating a background job that syncs the festival programme from the external API to the local database. The job will handle pagination, update existing records, and ensure that no duplicates are created. It will also handle failures gracefully, ensuring that already retrieved records are not lost. It implements Rails-community defaults, adding a gem "sidekiq-scheduler" to schedule a sidekiq job without incurring the cost of a full cron job. The screenings index page is updated to use Hotwire for filtering, allowing for a more dynamic user experience without full page reloads.
+
+I also reimplemented the test suite in minitest (from the project incluuded RSpec) for a variety of reasons, primarily personal preference but that preference is also based on an objective assessment I've made long ago; basically, Minitest is way better suited for modern Ruby parallelization and concurrency, which was a long suffered bottleneck I've had to deal in the CI/CD of pretty much all of my significant production Rails projects, so in every new project I start I aim to use Minitest as the default testing framework. (i also like the syntax way better than rspec)
+
+Some decisions I made; the scheduled worker fires every 15 minutes as the requirements handled to me didn't specify a window. 15 minutes is reasonable to have fresh data without overusing the API. I also added a `SyncLog` model to keep track of the sync runs, their status, and any errors encountered. This allows for easy monitoring and debugging of the sync process.
+
+I am assuming that the external API is the authoritative source of truth for the festival programme, and as such, I don't treat it as a "delta" feed, this means that the sync job can mark as "removed" records from the local database if they are no longer present in the API response. for idempotency, I also trust that the external_id present in the API response is unique and stable.
+
+I'm commiting per-page in the transactions of the sync job, so that if a page fails, the already processed pages are not lost.
+
+With more time, I would focus on adding telemetry and observability ops to the sync process, a more comprehensive test suite for the sync job (to better map edge cases like API failures, slow responses, timeouts, etc.), and I would also like to implement a better filtering UI for the screenings index page, like a segment-based filter or a in-between date range filter. I would also add a cache layer in-between sync runs.
+
 # Festival Programme Sync — Take-Home
 
 **Role:** Senior Rails / Hotwire Developer · **Time box:** 4 hours

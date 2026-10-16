@@ -2,6 +2,14 @@ require "test_helper"
 
 module ProgrammeSync
   class RunnerTest < ActiveSupport::TestCase
+    # A minimal Client double that yields one fixed page of raw records,
+    # for exercising errors ScreeningUpsert itself can raise.
+    SingleBatchClient = Struct.new(:records) do
+      def each_page(**)
+        yield records, page: 1, total_pages: 1
+      end
+    end
+
     test "syncs generation 1, then generation 2, and leaves the database matching upstream" do
       Runner.new(generation: 1, client: MockApiStub.client).call
 
@@ -69,6 +77,56 @@ module ProgrammeSync
       assert_equal 3, run.total_pages
       assert_equal 60, run.records_upserted
       assert run.finished_at.present?
+    end
+
+    test "marks the run failed, not stuck running, when upstream data is missing a required field" do
+      malformed = [ {
+        "film" => { "id" => "FILM-X", "title" => "Film X" },
+        "venue" => { "id" => "VEN-X", "name" => "Venue X" }
+      } ]
+
+      assert_raises(KeyError) do
+        Runner.new(generation: 1, client: SingleBatchClient.new(malformed)).call
+      end
+
+      run = SyncRun.order(:started_at).last
+      assert_predicate run, :failed?
+      assert_match(/KeyError/, run.error_message)
+    end
+
+    test "marks the run failed, not stuck running, on a validation error" do
+      invalid = [ {
+        "film" => { "id" => "FILM-X", "title" => nil },
+        "venue" => { "id" => "VEN-X", "name" => "Venue X" },
+        "id" => "SCR-X",
+        "starts_at" => Time.current.iso8601,
+        "status" => "scheduled"
+      } ]
+
+      assert_raises(ActiveRecord::RecordInvalid) do
+        Runner.new(generation: 1, client: SingleBatchClient.new(invalid)).call
+      end
+
+      run = SyncRun.order(:started_at).last
+      assert_predicate run, :failed?
+      assert_match(/RecordInvalid/, run.error_message)
+    end
+
+    test "marks the run failed, not stuck running, on a uniqueness race" do
+      original_save = Screening.instance_method(:save!)
+      Screening.define_method(:save!) { raise ActiveRecord::RecordNotUnique, "duplicate key value violates unique constraint" }
+
+      begin
+        assert_raises(ActiveRecord::RecordNotUnique) do
+          Runner.new(generation: 1, client: MockApiStub.client).call
+        end
+      ensure
+        Screening.define_method(:save!, original_save)
+      end
+
+      run = SyncRun.order(:started_at).last
+      assert_predicate run, :failed?
+      assert_match(/RecordNotUnique/, run.error_message)
     end
   end
 end

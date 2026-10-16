@@ -8,16 +8,16 @@ module ProgrammeSync
       stubs = Faraday::Adapter::Test::Stubs.new
       stubs.get(Client::PATH) do |env|
         page = env.params["page"].to_i
-        body = { page: page, total_pages: 3, screenings: [{ "id" => "SCR-#{page}" }] }
-        [200, JSON_HEADERS, body.to_json]
+        body = { page: page, total_pages: 3, screenings: [ { "id" => "SCR-#{page}" } ] }
+        [ 200, JSON_HEADERS, body.to_json ]
       end
-      client = Client.new(adapter: [:test, stubs])
+      client = Client.new(adapter: [ :test, stubs ])
 
       seen = []
-      client.each_page { |screenings, page:, total_pages:| seen << [page, total_pages, screenings] }
+      client.each_page { |screenings, page:, total_pages:| seen << [ page, total_pages, screenings ] }
 
-      assert_equal [1, 2, 3], seen.map(&:first)
-      assert_equal [{ "id" => "SCR-3" }], seen.last[2]
+      assert_equal [ 1, 2, 3 ], seen.map(&:first)
+      assert_equal [ { "id" => "SCR-3" } ], seen.last[2]
     end
 
     test "retries a timed-out page with a wider window and succeeds" do
@@ -27,9 +27,9 @@ module ProgrammeSync
         attempts += 1
         raise Faraday::TimeoutError if attempts < 2
 
-        [200, JSON_HEADERS, { page: 1, total_pages: 1, screenings: [] }.to_json]
+        [ 200, JSON_HEADERS, { page: 1, total_pages: 1, screenings: [] }.to_json ]
       end
-      client = Client.new(adapter: [:test, stubs], base_timeout: 1, max_attempts: 3)
+      client = Client.new(adapter: [ :test, stubs ], base_timeout: 1, max_attempts: 3)
 
       client.each_page { |*| }
 
@@ -43,7 +43,7 @@ module ProgrammeSync
         attempts += 1
         raise Faraday::TimeoutError
       end
-      client = Client.new(adapter: [:test, stubs], base_timeout: 1, max_attempts: 3)
+      client = Client.new(adapter: [ :test, stubs ], base_timeout: 1, max_attempts: 3)
 
       assert_raises(Errors::TimeoutError) { client.each_page { |*| } }
       assert_equal 3, attempts
@@ -54,9 +54,9 @@ module ProgrammeSync
       stubs = Faraday::Adapter::Test::Stubs.new
       stubs.get(Client::PATH) do
         attempts += 1
-        [500, {}, { error: "boom" }.to_json]
+        [ 500, {}, { error: "boom" }.to_json ]
       end
-      client = Client.new(adapter: [:test, stubs], max_attempts: 3)
+      client = Client.new(adapter: [ :test, stubs ], max_attempts: 3)
 
       assert_raises(Errors::ServerError) { client.each_page { |*| } }
       assert_equal 1, attempts
@@ -66,18 +66,18 @@ module ProgrammeSync
       stubs = Faraday::Adapter::Test::Stubs.new
       stubs.get(Client::PATH) do |env|
         page = env.params["page"].to_i
-        next [500, {}, { error: "boom" }.to_json] if page == 2
+        next [ 500, {}, { error: "boom" }.to_json ] if page == 2
 
-        [200, JSON_HEADERS, { page: page, total_pages: 3, screenings: [{ "id" => "SCR-#{page}" }] }.to_json]
+        [ 200, JSON_HEADERS, { page: page, total_pages: 3, screenings: [ { "id" => "SCR-#{page}" } ] }.to_json ]
       end
-      client = Client.new(adapter: [:test, stubs])
+      client = Client.new(adapter: [ :test, stubs ])
 
       seen = []
       assert_raises(Errors::ServerError) do
         client.each_page { |screenings, page:, total_pages:| seen << page }
       end
 
-      assert_equal [1], seen
+      assert_equal [ 1 ], seen
     end
   end
 end

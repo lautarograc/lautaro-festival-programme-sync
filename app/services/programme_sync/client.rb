@@ -76,7 +76,7 @@ module ProgrammeSync
         f.request :json
         f.response :json, content_type: /\bjson$/
         f.options.timeout = timeout
-        f.options.open_timeout = [timeout, @base_timeout].min
+        f.options.open_timeout = [ timeout, @base_timeout ].min
         f.adapter(*Array(@adapter))
       end
     end

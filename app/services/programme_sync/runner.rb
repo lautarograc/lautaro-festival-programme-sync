@@ -19,7 +19,7 @@ module ProgrammeSync
 
         removed = reconcile_removed_screenings(seen_external_ids)
         sync_run.update!(status: :succeeded, finished_at: Time.current, records_removed: removed)
-      rescue Errors::Error => e
+      rescue StandardError => e
         sync_run.update!(status: :failed, finished_at: Time.current, error_message: "#{e.class}: #{e.message}")
         raise
       end
